@@ -15,7 +15,7 @@ body {
   background: black;
 }
 
-/* 🎬 PINTEREST STYLE VIDEO BACKGROUND */
+/* 🎬 VIDEO BACKGROUND */
 #bgVideo {
   position: fixed;
   top: 0;
@@ -23,8 +23,55 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  z-index: -4;
+  filter: brightness(0.4);
+}
+
+/* 🌈 ANIMATED GRADIENT OVERLAY */
+.gradient-overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
   z-index: -3;
-  filter: brightness(0.5) blur(2px);
+  background: linear-gradient(270deg, #ff0080, #7928ca, #00c6ff);
+  background-size: 600% 600%;
+  animation: gradientMove 15s ease infinite;
+  opacity: 0.3;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ✨ FLOATING PARTICLES */
+.particles {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  overflow: hidden;
+}
+
+.particles span {
+  position: absolute;
+  display: block;
+  width: 8px;
+  height: 8px;
+  background: white;
+  opacity: 0.6;
+  border-radius: 50%;
+  animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+  from {
+    transform: translateY(100vh) scale(0.5);
+  }
+  to {
+    transform: translateY(-10vh) scale(1);
+  }
 }
 
 /* ✨ GLASS EFFECT */
@@ -82,10 +129,16 @@ body::after {
 
 <body>
 
-<!-- 🎥 SMOOTH LOOP BACKGROUND -->
+<!-- 🎥 VIDEO -->
 <video autoplay muted loop playsinline id="bgVideo">
   <source src="https://cdn.coverr.co/videos/coverr-night-traffic-in-the-city-1566/1080p.mp4" type="video/mp4">
 </video>
+
+<!-- 🌈 GRADIENT -->
+<div class="gradient-overlay"></div>
+
+<!-- ✨ PARTICLES -->
+<div class="particles" id="particles"></div>
 
 <div id="clock"></div>
 
@@ -103,8 +156,6 @@ body::after {
       <div class="col-md-4">
         <input type="time" id="timeInput" class="form-control" required>
       </div>
-
-      <input type="hidden" value="daily">
 
       <div class="col-md-12 mt-2">
         <button class="btn btn-primary w-100">Add Task</button>
@@ -124,6 +175,20 @@ body::after {
 <audio id="alarmSound"></audio>
 
 <script>
+/* ✨ GENERATE PARTICLES */
+const particleContainer = document.getElementById("particles");
+
+for (let i = 0; i < 40; i++) {
+  const span = document.createElement("span");
+
+  span.style.left = Math.random() * 100 + "vw";
+  span.style.animationDuration = (5 + Math.random() * 10) + "s";
+  span.style.opacity = Math.random();
+
+  particleContainer.appendChild(span);
+}
+
+/* TASK LOGIC */
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
 const form = document.getElementById("taskForm");
