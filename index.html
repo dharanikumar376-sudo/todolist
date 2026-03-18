@@ -12,6 +12,7 @@ body {
   margin: 0;
   font-family: Arial;
   overflow-x: hidden;
+  background: black;
 }
 
 /* 🎬 Background Video */
@@ -22,39 +23,68 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  z-index: -2;
-  filter: brightness(0.6) blur(2px);
+  z-index: -3;
+  filter: brightness(0.4) blur(3px);
 }
 
-/* Overlay */
-#overlay {
+/* 🌌 Glow Gradient Animation */
+body::before {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, red, blue, purple, cyan);
+  animation: moveBG 8s linear infinite;
+  z-index: -2;
+  opacity: 0.4;
+}
+
+@keyframes moveBG {
+  0% { transform: translate(-25%, -25%) rotate(0deg); }
+  100% { transform: translate(-25%, -25%) rotate(360deg); }
+}
+
+/* ✨ Floating particles */
+body::after {
+  content: "";
   position: fixed;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.4);
+  background-image: radial-gradient(white 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: particles 10s linear infinite;
   z-index: -1;
+  opacity: 0.3;
 }
 
-/* UI */
+@keyframes particles {
+  from { transform: translateY(0); }
+  to { transform: translateY(-200px); }
+}
+
+/* Glass UI */
 .card {
   border-radius: 20px;
   background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(15px);
   color: white;
 }
 
+/* Clock */
 #clock {
   text-align: center;
   color: white;
   margin: 10px;
+  font-size: 18px;
 }
 
+/* Completed */
 .completed {
   text-decoration: line-through;
   opacity: 0.6;
 }
 
-/* Alarm */
+/* Alarm Screen */
 #alarmScreen {
   position: fixed;
   width: 100%;
@@ -75,8 +105,6 @@ body {
 <video autoplay muted loop playsinline id="bgVideo">
   <source src="https://cdn.coverr.co/videos/coverr-racing-car-on-track-1570/1080p.mp4" type="video/mp4">
 </video>
-
-<div id="overlay"></div>
 
 <div id="clock"></div>
 
@@ -175,7 +203,7 @@ function save() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-/* Render with buttons */
+/* Render */
 function render() {
   list.innerHTML = "";
 
@@ -198,7 +226,7 @@ function render() {
   });
 }
 
-/* ✅ Stop */
+/* Stop */
 function completeTask(id) {
   tasks = tasks.map(t => {
     if (t.id === id) t.completed = true;
@@ -208,7 +236,7 @@ function completeTask(id) {
   render();
 }
 
-/* ✏️ Edit */
+/* Edit */
 function editTask(id) {
   const task = tasks.find(t => t.id === id);
 
@@ -220,7 +248,7 @@ function editTask(id) {
   deleteTask(id);
 }
 
-/* 🗑 Delete */
+/* Delete */
 function deleteTask(id) {
   tasks = tasks.filter(t => t.id !== id);
   save();
