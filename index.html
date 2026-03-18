@@ -14,7 +14,7 @@ body {
   overflow-x: hidden;
 }
 
-/* 🎬 Background Video (FIXED) */
+/* 🎬 Background Video */
 #bgVideo {
   position: fixed;
   top: 0;
@@ -26,7 +26,7 @@ body {
   filter: brightness(0.6) blur(2px);
 }
 
-/* 🌌 Overlay */
+/* Overlay */
 #overlay {
   position: fixed;
   width: 100%;
@@ -35,45 +35,28 @@ body {
   z-index: -1;
 }
 
-/* 🔥 Backup Animation */
-body::before {
-  content: "";
-  position: fixed;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(45deg, red, blue, purple, orange);
-  animation: moveBG 10s linear infinite;
-  z-index: -3;
-  opacity: 0.3;
-}
-
-@keyframes moveBG {
-  0% { transform: translate(-25%, -25%) rotate(0deg); }
-  100% { transform: translate(-25%, -25%) rotate(360deg); }
-}
-
-/* Clock */
-#clock {
-  text-align: center;
-  color: white;
-  font-size: 20px;
-  margin: 10px;
-}
-
-/* Glass UI */
+/* UI */
 .card {
   border-radius: 20px;
   background: rgba(255,255,255,0.15);
   backdrop-filter: blur(12px);
   color: white;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
 }
 
-/* Alarm Screen */
+#clock {
+  text-align: center;
+  color: white;
+  margin: 10px;
+}
+
+.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* Alarm */
 #alarmScreen {
   position: fixed;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   background: black;
@@ -84,16 +67,11 @@ body::before {
   flex-direction: column;
   z-index: 9999;
 }
-
-#alarmScreen h1 {
-  font-size: 40px;
-}
 </style>
 </head>
 
 <body>
 
-<!-- 🎬 FIXED VIDEO -->
 <video autoplay muted loop playsinline id="bgVideo">
   <source src="https://cdn.coverr.co/videos/coverr-racing-car-on-track-1570/1080p.mp4" type="video/mp4">
 </video>
@@ -134,7 +112,7 @@ body::before {
   </div>
 </div>
 
-<!-- ⏰ Alarm -->
+<!-- Alarm -->
 <div id="alarmScreen">
   <h1 id="alarmText">⏰ Alarm!</h1>
   <button class="btn btn-danger mt-3" onclick="stopAlarm()">STOP</button>
@@ -174,11 +152,7 @@ form.addEventListener("submit", e => {
   e.preventDefault();
 
   const file = soundInput.files[0];
-  let soundURL = "";
-
-  if (file) {
-    soundURL = URL.createObjectURL(file);
-  }
+  let soundURL = file ? URL.createObjectURL(file) : "";
 
   const task = {
     id: Date.now(),
@@ -201,6 +175,7 @@ function save() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
+/* Render with buttons */
 function render() {
   list.innerHTML = "";
 
@@ -208,13 +183,48 @@ function render() {
     const li = document.createElement("li");
     li.className = "list-group-item bg-transparent text-white";
 
+    if (task.completed) li.classList.add("completed");
+
     li.innerHTML = `
       <strong>${task.text}</strong><br>
-      <small>${task.date} ${task.time} (${task.repeat})</small>
+      <small>${task.date} ${task.time} (${task.repeat})</small><br>
+
+      <button class="btn btn-success btn-sm mt-2" onclick="completeTask(${task.id})">Stop</button>
+      <button class="btn btn-warning btn-sm mt-2" onclick="editTask(${task.id})">Edit</button>
+      <button class="btn btn-danger btn-sm mt-2" onclick="deleteTask(${task.id})">Delete</button>
     `;
 
     list.appendChild(li);
   });
+}
+
+/* ✅ Stop */
+function completeTask(id) {
+  tasks = tasks.map(t => {
+    if (t.id === id) t.completed = true;
+    return t;
+  });
+  save();
+  render();
+}
+
+/* ✏️ Edit */
+function editTask(id) {
+  const task = tasks.find(t => t.id === id);
+
+  taskInput.value = task.text;
+  dateInput.value = task.date;
+  timeInput.value = task.time;
+  repeatInput.value = task.repeat;
+
+  deleteTask(id);
+}
+
+/* 🗑 Delete */
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  save();
+  render();
 }
 
 /* Alarm */
