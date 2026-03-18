@@ -1,3 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Alarm To-Do</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  overflow-x: hidden;
+  background: black;
+}
+
+/* Background Video */
+#bgVideo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -3;
+  filter: brightness(0.4) blur(3px);
+}
+
+/* Animation */
+body::before {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, red, blue, purple, cyan);
+  animation: moveBG 8s linear infinite;
+  z-index: -2;
+  opacity: 0.4;
+}
+
+@keyframes moveBG {
+  0% { transform: translate(-25%, -25%) rotate(0deg); }
+  100% { transform: translate(-25%, -25%) rotate(360deg); }
+}
+
+/* UI */
+.card {
+  border-radius: 20px;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(15px);
+  color: white;
+}
+
+#clock {
+  text-align: center;
+  color: white;
+  margin: 10px;
+  font-size: 20px;
+}
+
+.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* Alarm Screen Animation */
+#alarmScreen {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, red, black);
+  color: white;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 9999;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { background: black; }
+  50% { background: red; }
+  100% { background: black; }
+}
+</style>
+</head>
+
+<body>
+
+<video autoplay muted loop playsinline id="bgVideo">
+  <source src="https://cdn.coverr.co/videos/coverr-racing-car-on-track-1570/1080p.mp4" type="video/mp4">
+</video>
+
+<div id="clock"></div>
+
+<div class="container my-5">
+  <div class="card p-4">
+    <h2 class="text-center">📱 Smart Alarm To-Do</h2>
+
+    <form id="taskForm" class="row g-2 my-3">
+      <div class="col-md-3">
+        <input type="text" id="taskInput" class="form-control" placeholder="Task" required>
+      </div>
+      <div class="col-md-2">
+        <input type="date" id="dateInput" class="form-control" required>
+      </div>
+      <div class="col-md-2">
+        <input type="time" id="timeInput" class="form-control" required>
+      </div>
+      <div class="col-md-2">
+        <select id="repeatInput" class="form-control">
+          <option value="none">One Time</option>
+          <option value="daily">Daily</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <input type="file" id="soundInput" class="form-control">
+      </div>
+      <div class="col-md-12 mt-2">
+        <button class="btn btn-primary w-100">Add Task</button>
+      </div>
+    </form>
+
+    <ul id="taskList" class="list-group"></ul>
+  </div>
+</div>
+
+<!-- Alarm -->
+<div id="alarmScreen">
+  <h1 id="alarmText">⏰ Alarm!</h1>
+  <button class="btn btn-danger mt-3" onclick="stopAlarm()">STOP</button>
+</div>
+
+<audio id="alarmSound"></audio>
+
 <script>
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
@@ -8,9 +145,11 @@ const taskInput = document.getElementById("taskInput");
 const dateInput = document.getElementById("dateInput");
 const timeInput = document.getElementById("timeInput");
 const repeatInput = document.getElementById("repeatInput");
+const soundInput = document.getElementById("soundInput");
 
 const alarmScreen = document.getElementById("alarmScreen");
 const alarmText = document.getElementById("alarmText");
+const alarmSound = document.getElementById("alarmSound");
 
 /* Clock */
 setInterval(() => {
@@ -27,12 +166,16 @@ if ("Notification" in window) {
 form.addEventListener("submit", e => {
   e.preventDefault();
 
+  const file = soundInput.files[0];
+  let soundURL = file ? URL.createObjectURL(file) : "";
+
   const task = {
     id: Date.now(),
     text: taskInput.value,
     date: dateInput.value,
     time: timeInput.value,
     repeat: repeatInput.value,
+    sound: soundURL,
     completed: false,
     notified: false
   };
@@ -99,18 +242,27 @@ function deleteTask(id) {
   render();
 }
 
-/* Alarm (NO SOUND 🔇) */
+/* Alarm */
 function triggerAlarm(task) {
   alarmText.innerText = "⏰ " + task.text;
   alarmScreen.style.display = "flex";
 
+  alarmSound.src = task.sound || 
+    "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
+
+  alarmSound.loop = true;
+  alarmSound.volume = 1.0; // 🔊 FULL VOLUME
+  alarmSound.play().catch(()=>{});
+
   if (Notification.permission === "granted") {
-    new Notification("⏰ Reminder", { body: task.text });
+    new Notification("⏰ Alarm!", { body: task.text });
   }
 }
 
 function stopAlarm() {
   alarmScreen.style.display = "none";
+  alarmSound.pause();
+  alarmSound.currentTime = 0;
 }
 
 /* Reminder */
@@ -144,3 +296,6 @@ setInterval(checkReminders, 1000);
 
 render();
 </script>
+
+</body>
+</html>
