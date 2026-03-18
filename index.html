@@ -14,7 +14,7 @@ body {
   overflow-x: hidden;
 }
 
-/* 🎬 Background Video */
+/* 🎬 Premium Background Video */
 #bgVideo {
   position: fixed;
   top: 0;
@@ -23,6 +23,7 @@ body {
   height: 100%;
   object-fit: cover;
   z-index: -1;
+  filter: brightness(0.5) blur(2px); /* 🔥 Premium effect */
 }
 
 /* Clock */
@@ -33,10 +34,13 @@ body {
   margin: 10px;
 }
 
-/* Card */
+/* Glass Card UI */
 .card {
-  border-radius: 15px;
-  background: rgba(255,255,255,0.9);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(12px);
+  color: white;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
 }
 
 /* Alarm Screen */
@@ -63,9 +67,9 @@ body {
 
 <body>
 
-<!-- 🎬 Background Video -->
+<!-- 🎬 Premium Car Background -->
 <video autoplay muted loop id="bgVideo">
-  <source src="https://cdn.coverr.co/videos/coverr-racing-car-on-track-1570/1080p.mp4" type="video/mp4">
+  <source src="https://cdn.coverr.co/videos/coverr-car-driving-through-city-at-night-1606/1080p.mp4" type="video/mp4">
 </video>
 
 <div id="clock"></div>
@@ -176,7 +180,7 @@ function render() {
 
   tasks.forEach(task => {
     const li = document.createElement("li");
-    li.className = "list-group-item";
+    li.className = "list-group-item bg-transparent text-white";
 
     li.innerHTML = `
       <strong>${task.text}</strong><br>
