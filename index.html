@@ -27,7 +27,7 @@ body {
   filter: brightness(0.4) blur(3px);
 }
 
-/* 🌌 Glow Gradient Animation */
+/* 🌌 Gradient Animation */
 body::before {
   content: "";
   position: fixed;
@@ -44,7 +44,7 @@ body::before {
   100% { transform: translate(-25%, -25%) rotate(360deg); }
 }
 
-/* ✨ Floating particles */
+/* ✨ Particles */
 body::after {
   content: "";
   position: fixed;
@@ -62,7 +62,7 @@ body::after {
   to { transform: translateY(-200px); }
 }
 
-/* Glass UI */
+/* UI */
 .card {
   border-radius: 20px;
   background: rgba(255,255,255,0.15);
@@ -70,21 +70,18 @@ body::after {
   color: white;
 }
 
-/* Clock */
 #clock {
   text-align: center;
   color: white;
   margin: 10px;
-  font-size: 18px;
 }
 
-/* Completed */
 .completed {
   text-decoration: line-through;
   opacity: 0.6;
 }
 
-/* Alarm Screen */
+/* Alarm */
 #alarmScreen {
   position: fixed;
   width: 100%;
@@ -280,20 +277,25 @@ function stopAlarm() {
   alarmSound.pause();
 }
 
-/* Reminder */
+/* 🔥 5 MIN EARLY REMINDER */
 function checkReminders() {
   const now = new Date();
 
   tasks.forEach(task => {
     if (!task.completed) {
-      const t = new Date(task.date + "T" + task.time);
 
-      if (now >= t && !task.notified) {
+      const taskTime = new Date(task.date + "T" + task.time);
+
+      // ⏰ 5 minutes before
+      const earlyTime = new Date(taskTime.getTime() - 5 * 60000);
+
+      if (now >= earlyTime && !task.notified) {
+
         triggerAlarm(task);
 
         if (task.repeat === "daily") {
-          const next = new Date();
-          next.setDate(next.getDate()+1);
+          const next = new Date(taskTime);
+          next.setDate(next.getDate() + 1);
           task.date = next.toISOString().split("T")[0];
         } else {
           task.notified = true;
