@@ -9,19 +9,23 @@
 
 <style>
 body {
-  min-height: 100vh;
+  margin: 0;
   font-family: Arial;
-  background: linear-gradient(-45deg, #667eea, #764ba2, #ff6a00, #ee0979);
-  background-size: 400% 400%;
-  animation: gradientBG 10s ease infinite;
+  overflow-x: hidden;
 }
 
-@keyframes gradientBG {
-  0% {background-position: 0% 50%;}
-  50% {background-position: 100% 50%;}
-  100% {background-position: 0% 50%;}
+/* 🎬 Background Video */
+#bgVideo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
 }
 
+/* Clock */
 #clock {
   text-align: center;
   color: white;
@@ -29,16 +33,13 @@ body {
   margin: 10px;
 }
 
+/* Card */
 .card {
   border-radius: 15px;
   background: rgba(255,255,255,0.9);
 }
 
-.completed {
-  text-decoration: line-through;
-}
-
-/* Full screen alarm */
+/* Alarm Screen */
 #alarmScreen {
   position: fixed;
   top: 0;
@@ -57,11 +58,15 @@ body {
 #alarmScreen h1 {
   font-size: 40px;
 }
-
 </style>
 </head>
 
 <body>
+
+<!-- 🎬 Background Video -->
+<video autoplay muted loop id="bgVideo">
+  <source src="https://cdn.coverr.co/videos/coverr-racing-car-on-track-1570/1080p.mp4" type="video/mp4">
+</video>
 
 <div id="clock"></div>
 
@@ -97,7 +102,7 @@ body {
   </div>
 </div>
 
-<!-- Alarm UI -->
+<!-- ⏰ Alarm UI -->
 <div id="alarmScreen">
   <h1 id="alarmText">⏰ Alarm!</h1>
   <button class="btn btn-danger mt-3" onclick="stopAlarm()">STOP</button>
@@ -121,18 +126,18 @@ const alarmScreen = document.getElementById("alarmScreen");
 const alarmText = document.getElementById("alarmText");
 const alarmSound = document.getElementById("alarmSound");
 
-// Clock
+/* ⏰ Live Clock */
 setInterval(() => {
   document.getElementById("clock").innerText =
     new Date().toLocaleString();
 }, 1000);
 
-// Notification
+/* 🔔 Notification Permission */
 if ("Notification" in window) {
   Notification.requestPermission();
 }
 
-// Add Task
+/* ➕ Add Task */
 form.addEventListener("submit", e => {
   e.preventDefault();
 
@@ -160,11 +165,12 @@ form.addEventListener("submit", e => {
   form.reset();
 });
 
+/* 💾 Save */
 function save() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-// Render
+/* 📋 Render */
 function render() {
   list.innerHTML = "";
 
@@ -181,7 +187,7 @@ function render() {
   });
 }
 
-// Alarm Trigger
+/* 🚨 Alarm Trigger */
 function triggerAlarm(task) {
   alarmText.innerText = "⏰ " + task.text;
   alarmScreen.style.display = "flex";
@@ -189,29 +195,30 @@ function triggerAlarm(task) {
   if (task.sound) {
     alarmSound.src = task.sound;
   } else {
-    alarmSound.src = "https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3";
+    alarmSound.src = "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
   }
 
   alarmSound.loop = true;
-  alarmSound.play();
+  alarmSound.play().catch(()=>{});
 
-  // vibration
+  /* 📳 Vibration */
   if (navigator.vibrate) {
     navigator.vibrate([500, 300, 500, 300]);
   }
 
+  /* 🔔 Notification */
   if (Notification.permission === "granted") {
     new Notification("⏰ Alarm!", { body: task.text });
   }
 }
 
-// Stop alarm
+/* 🛑 Stop Alarm */
 function stopAlarm() {
   alarmScreen.style.display = "none";
   alarmSound.pause();
 }
 
-// Check reminders
+/* 🔁 Reminder Check */
 function checkReminders() {
   const now = new Date();
 
@@ -223,7 +230,9 @@ function checkReminders() {
         triggerAlarm(task);
 
         if (task.repeat === "daily") {
-          task.date = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+          const nextDay = new Date();
+          nextDay.setDate(nextDay.getDate() + 1);
+          task.date = nextDay.toISOString().split("T")[0];
         } else {
           task.notified = true;
         }
