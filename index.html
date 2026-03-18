@@ -64,7 +64,7 @@ body::before {
   opacity: 0.6;
 }
 
-/* Alarm Screen Animation */
+/* Alarm Screen */
 #alarmScreen {
   position: fixed;
   width: 100%;
@@ -100,24 +100,19 @@ body::before {
     <h2 class="text-center">📱 Smart Alarm To-Do</h2>
 
     <form id="taskForm" class="row g-2 my-3">
-      <div class="col-md-3">
+      <div class="col-md-4">
         <input type="text" id="taskInput" class="form-control" placeholder="Task" required>
       </div>
-      <div class="col-md-2">
+      <div class="col-md-4">
         <input type="date" id="dateInput" class="form-control" required>
       </div>
-      <div class="col-md-2">
+      <div class="col-md-4">
         <input type="time" id="timeInput" class="form-control" required>
       </div>
-      <div class="col-md-2">
-        <select id="repeatInput" class="form-control">
-          <option value="none">One Time</option>
-          <option value="daily">Daily</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <input type="file" id="soundInput" class="form-control">
-      </div>
+
+      <!-- ONLY DAILY -->
+      <input type="hidden" id="repeatInput" value="daily">
+
       <div class="col-md-12 mt-2">
         <button class="btn btn-primary w-100">Add Task</button>
       </div>
@@ -145,7 +140,6 @@ const taskInput = document.getElementById("taskInput");
 const dateInput = document.getElementById("dateInput");
 const timeInput = document.getElementById("timeInput");
 const repeatInput = document.getElementById("repeatInput");
-const soundInput = document.getElementById("soundInput");
 
 const alarmScreen = document.getElementById("alarmScreen");
 const alarmText = document.getElementById("alarmText");
@@ -166,16 +160,12 @@ if ("Notification" in window) {
 form.addEventListener("submit", e => {
   e.preventDefault();
 
-  const file = soundInput.files[0];
-  let soundURL = file ? URL.createObjectURL(file) : "";
-
   const task = {
     id: Date.now(),
     text: taskInput.value,
     date: dateInput.value,
     time: timeInput.value,
-    repeat: repeatInput.value,
-    sound: soundURL,
+    repeat: "daily",
     completed: false,
     notified: false
   };
@@ -202,7 +192,7 @@ function render() {
 
     li.innerHTML = `
       <strong>${task.text}</strong><br>
-      <small>${task.date} ${task.time} (${task.repeat})</small><br>
+      <small>${task.date} ${task.time} (Daily)</small><br>
 
       <button class="btn btn-success btn-sm mt-2" onclick="completeTask(${task.id})">Stop</button>
       <button class="btn btn-warning btn-sm mt-2" onclick="editTask(${task.id})">Edit</button>
@@ -230,7 +220,6 @@ function editTask(id) {
   taskInput.value = task.text;
   dateInput.value = task.date;
   timeInput.value = task.time;
-  repeatInput.value = task.repeat;
 
   deleteTask(id);
 }
@@ -247,11 +236,9 @@ function triggerAlarm(task) {
   alarmText.innerText = "⏰ " + task.text;
   alarmScreen.style.display = "flex";
 
-  alarmSound.src = task.sound || 
-    "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
-
+  alarmSound.src = "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
   alarmSound.loop = true;
-  alarmSound.volume = 1.0; // 🔊 FULL VOLUME
+  alarmSound.volume = 1.0;
   alarmSound.play().catch(()=>{});
 
   if (Notification.permission === "granted") {
@@ -279,12 +266,11 @@ function checkReminders() {
         triggerAlarm(task);
         task.notified = true;
 
-        if (task.repeat === "daily") {
-          const next = new Date(taskTime);
-          next.setDate(next.getDate() + 1);
-          task.date = next.toISOString().split("T")[0];
-          task.notified = false;
-        }
+        // Daily repeat
+        const next = new Date(taskTime);
+        next.setDate(next.getDate() + 1);
+        task.date = next.toISOString().split("T")[0];
+        task.notified = false;
 
         save();
       }
