@@ -15,7 +15,7 @@ body {
   background: black;
 }
 
-/* 🎥 VIDEO BASE */
+/* 🎥 VIDEO */
 #bgVideo {
   position: fixed;
   width: 100%;
@@ -25,7 +25,7 @@ body {
   filter: brightness(0.25);
 }
 
-/* 🌌 AURORA LAYER */
+/* 🌌 AURORA */
 .aurora {
   position: fixed;
   width: 200%;
@@ -44,7 +44,7 @@ body {
   100% { transform: translate(-10%, -10%) rotate(360deg); }
 }
 
-/* ✨ PARTICLES CANVAS */
+/* ✨ PARTICLES */
 #particlesCanvas {
   position: fixed;
   top: 0;
@@ -93,7 +93,7 @@ body::after {
   opacity: 0.6;
 }
 
-/* ALARM */
+/* 🚨 ALARM (VISUAL ONLY) */
 #alarmScreen {
   position: fixed;
   width: 100%;
@@ -158,16 +158,14 @@ body::after {
   </div>
 </div>
 
-<!-- ALARM -->
+<!-- 🚨 ALARM -->
 <div id="alarmScreen">
   <h1 id="alarmText">⏰ Alarm!</h1>
   <button class="btn btn-danger mt-3" onclick="stopAlarm()">STOP</button>
 </div>
 
-<audio id="alarmSound"></audio>
-
 <script>
-/* 🧠 PARTICLES SYSTEM (ADVANCED) */
+/* ✨ PARTICLES ENGINE */
 const canvas = document.getElementById("particlesCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -205,12 +203,10 @@ function animateParticles() {
 
   requestAnimationFrame(animateParticles);
 }
-
 animateParticles();
 
 /* 💡 MOUSE GLOW */
 const glow = document.getElementById("mouseGlow");
-
 document.addEventListener("mousemove", e => {
   glow.style.left = e.clientX + "px";
   glow.style.top = e.clientY + "px";
@@ -228,7 +224,6 @@ const timeInput = document.getElementById("timeInput");
 
 const alarmScreen = document.getElementById("alarmScreen");
 const alarmText = document.getElementById("alarmText");
-const alarmSound = document.getElementById("alarmSound");
 
 /* CLOCK */
 setInterval(() => {
@@ -303,19 +298,18 @@ function deleteTask(id) {
   render();
 }
 
-/* ALARM */
+/* 🚨 SILENT ALARM */
 function triggerAlarm(task) {
   alarmText.innerText = "⏰ " + task.text;
   alarmScreen.style.display = "flex";
 
-  alarmSound.src = "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
-  alarmSound.loop = true;
-  alarmSound.play();
+  if (Notification.permission === "granted") {
+    new Notification("⏰ Alarm!", { body: task.text });
+  }
 }
 
 function stopAlarm() {
   alarmScreen.style.display = "none";
-  alarmSound.pause();
 }
 
 /* CHECK */
