@@ -14,7 +14,7 @@ body {
   overflow-x: hidden;
 }
 
-/* 🎬 Premium Background Video */
+/* 🎬 Background Video */
 #bgVideo {
   position: fixed;
   top: 0;
@@ -22,8 +22,19 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  z-index: -2;
+  filter: brightness(0.6) blur(2px);
+}
+
+/* 🌌 Dark Overlay */
+#overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
   z-index: -1;
-  filter: brightness(0.5) blur(2px); /* 🔥 Premium effect */
 }
 
 /* Clock */
@@ -34,7 +45,7 @@ body {
   margin: 10px;
 }
 
-/* Glass Card UI */
+/* Glass UI */
 .card {
   border-radius: 20px;
   background: rgba(255,255,255,0.15);
@@ -67,10 +78,11 @@ body {
 
 <body>
 
-<!-- 🎬 Premium Car Background -->
-<video autoplay muted loop id="bgVideo">
-  <source src="https://cdn.coverr.co/videos/coverr-car-driving-through-city-at-night-1606/1080p.mp4" type="video/mp4">
-</video>
+<!-- 🎬 Video -->
+<video autoplay muted loop id="bgVideo"></video>
+
+<!-- 🌌 Overlay -->
+<div id="overlay"></div>
 
 <div id="clock"></div>
 
@@ -106,7 +118,7 @@ body {
   </div>
 </div>
 
-<!-- ⏰ Alarm UI -->
+<!-- ⏰ Alarm -->
 <div id="alarmScreen">
   <h1 id="alarmText">⏰ Alarm!</h1>
   <button class="btn btn-danger mt-3" onclick="stopAlarm()">STOP</button>
@@ -117,6 +129,27 @@ body {
 <script>
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
+/* 🎬 Multiple Car Videos */
+const videos = [
+  "https://cdn.coverr.co/videos/coverr-racing-car-on-track-1570/1080p.mp4",
+  "https://cdn.coverr.co/videos/coverr-car-driving-through-city-at-night-1606/1080p.mp4",
+  "https://cdn.coverr.co/videos/coverr-driving-on-a-highway-while-sunset-1589/1080p.mp4"
+];
+
+let videoIndex = 0;
+const bgVideo = document.getElementById("bgVideo");
+
+function changeVideo() {
+  bgVideo.src = videos[videoIndex];
+  bgVideo.play();
+  videoIndex = (videoIndex + 1) % videos.length;
+}
+
+/* Change video every 10 sec */
+setInterval(changeVideo, 10000);
+changeVideo();
+
+/* Elements */
 const form = document.getElementById("taskForm");
 const list = document.getElementById("taskList");
 
@@ -130,18 +163,18 @@ const alarmScreen = document.getElementById("alarmScreen");
 const alarmText = document.getElementById("alarmText");
 const alarmSound = document.getElementById("alarmSound");
 
-/* ⏰ Live Clock */
+/* Clock */
 setInterval(() => {
   document.getElementById("clock").innerText =
     new Date().toLocaleString();
 }, 1000);
 
-/* 🔔 Notification Permission */
+/* Notification */
 if ("Notification" in window) {
   Notification.requestPermission();
 }
 
-/* ➕ Add Task */
+/* Add Task */
 form.addEventListener("submit", e => {
   e.preventDefault();
 
@@ -169,12 +202,10 @@ form.addEventListener("submit", e => {
   form.reset();
 });
 
-/* 💾 Save */
 function save() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-/* 📋 Render */
 function render() {
   list.innerHTML = "";
 
@@ -191,52 +222,46 @@ function render() {
   });
 }
 
-/* 🚨 Alarm Trigger */
+/* Alarm */
 function triggerAlarm(task) {
   alarmText.innerText = "⏰ " + task.text;
   alarmScreen.style.display = "flex";
 
-  if (task.sound) {
-    alarmSound.src = task.sound;
-  } else {
-    alarmSound.src = "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
-  }
+  alarmSound.src = task.sound || 
+    "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
 
   alarmSound.loop = true;
   alarmSound.play().catch(()=>{});
 
-  /* 📳 Vibration */
   if (navigator.vibrate) {
-    navigator.vibrate([500, 300, 500, 300]);
+    navigator.vibrate([500,300,500]);
   }
 
-  /* 🔔 Notification */
   if (Notification.permission === "granted") {
     new Notification("⏰ Alarm!", { body: task.text });
   }
 }
 
-/* 🛑 Stop Alarm */
 function stopAlarm() {
   alarmScreen.style.display = "none";
   alarmSound.pause();
 }
 
-/* 🔁 Reminder Check */
+/* Reminder */
 function checkReminders() {
   const now = new Date();
 
   tasks.forEach(task => {
     if (!task.completed) {
-      const taskTime = new Date(task.date + "T" + task.time);
+      const t = new Date(task.date + "T" + task.time);
 
-      if (now >= taskTime && !task.notified) {
+      if (now >= t && !task.notified) {
         triggerAlarm(task);
 
         if (task.repeat === "daily") {
-          const nextDay = new Date();
-          nextDay.setDate(nextDay.getDate() + 1);
-          task.date = nextDay.toISOString().split("T")[0];
+          const next = new Date();
+          next.setDate(next.getDate()+1);
+          task.date = next.toISOString().split("T")[0];
         } else {
           task.notified = true;
         }
