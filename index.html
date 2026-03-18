@@ -15,7 +15,7 @@ body {
   background: black;
 }
 
-/* Background Video */
+/* VIDEO BACKGROUND */
 #bgVideo {
   position: fixed;
   top: 0;
@@ -24,30 +24,23 @@ body {
   height: 100%;
   object-fit: cover;
   z-index: -3;
-  filter: brightness(0.4) blur(3px);
+  filter: brightness(0.3) blur(2px);
 }
 
-/* Animation */
-body::before {
-  content: "";
+/* PARTICLES */
+#particles {
   position: fixed;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(45deg, red, blue, purple, cyan);
-  animation: moveBG 8s linear infinite;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: -2;
-  opacity: 0.4;
-}
-
-@keyframes moveBG {
-  0% { transform: translate(-25%, -25%) rotate(0deg); }
-  100% { transform: translate(-25%, -25%) rotate(360deg); }
 }
 
 /* UI */
 .card {
   border-radius: 20px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.1);
   backdrop-filter: blur(15px);
   color: white;
 }
@@ -64,7 +57,7 @@ body::before {
   opacity: 0.6;
 }
 
-/* Alarm Screen */
+/* ALARM SCREEN */
 #alarmScreen {
   position: fixed;
   width: 100%;
@@ -89,9 +82,13 @@ body::before {
 
 <body>
 
+<!-- VIDEO -->
 <video autoplay muted loop playsinline id="bgVideo">
   <source src="https://cdn.coverr.co/videos/coverr-racing-car-on-track-1570/1080p.mp4" type="video/mp4">
 </video>
+
+<!-- PARTICLES -->
+<canvas id="particles"></canvas>
 
 <div id="clock"></div>
 
@@ -110,7 +107,6 @@ body::before {
         <input type="time" id="timeInput" class="form-control" required>
       </div>
 
-      <!-- ONLY DAILY -->
       <input type="hidden" id="repeatInput" value="daily">
 
       <div class="col-md-12 mt-2">
@@ -122,7 +118,7 @@ body::before {
   </div>
 </div>
 
-<!-- Alarm -->
+<!-- ALARM -->
 <div id="alarmScreen">
   <h1 id="alarmText">⏰ Alarm!</h1>
   <button class="btn btn-danger mt-3" onclick="stopAlarm()">STOP</button>
@@ -139,24 +135,23 @@ const list = document.getElementById("taskList");
 const taskInput = document.getElementById("taskInput");
 const dateInput = document.getElementById("dateInput");
 const timeInput = document.getElementById("timeInput");
-const repeatInput = document.getElementById("repeatInput");
 
 const alarmScreen = document.getElementById("alarmScreen");
 const alarmText = document.getElementById("alarmText");
 const alarmSound = document.getElementById("alarmSound");
 
-/* Clock */
+/* CLOCK */
 setInterval(() => {
   document.getElementById("clock").innerText =
     new Date().toLocaleString();
 }, 1000);
 
-/* Notification */
+/* NOTIFICATION */
 if ("Notification" in window) {
   Notification.requestPermission();
 }
 
-/* Add Task */
+/* ADD TASK */
 form.addEventListener("submit", e => {
   e.preventDefault();
 
@@ -165,7 +160,6 @@ form.addEventListener("submit", e => {
     text: taskInput.value,
     date: dateInput.value,
     time: timeInput.value,
-    repeat: "daily",
     completed: false,
     notified: false
   };
@@ -180,7 +174,7 @@ function save() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-/* Render */
+/* RENDER */
 function render() {
   list.innerHTML = "";
 
@@ -203,7 +197,6 @@ function render() {
   });
 }
 
-/* Stop */
 function completeTask(id) {
   tasks = tasks.map(t => {
     if (t.id === id) t.completed = true;
@@ -213,7 +206,6 @@ function completeTask(id) {
   render();
 }
 
-/* Edit */
 function editTask(id) {
   const task = tasks.find(t => t.id === id);
 
@@ -224,14 +216,13 @@ function editTask(id) {
   deleteTask(id);
 }
 
-/* Delete */
 function deleteTask(id) {
   tasks = tasks.filter(t => t.id !== id);
   save();
   render();
 }
 
-/* Alarm */
+/* ALARM */
 function triggerAlarm(task) {
   alarmText.innerText = "⏰ " + task.text;
   alarmScreen.style.display = "flex";
@@ -252,7 +243,7 @@ function stopAlarm() {
   alarmSound.currentTime = 0;
 }
 
-/* Reminder */
+/* REMINDER */
 function checkReminders() {
   const now = new Date();
 
@@ -266,7 +257,6 @@ function checkReminders() {
         triggerAlarm(task);
         task.notified = true;
 
-        // Daily repeat
         const next = new Date(taskTime);
         next.setDate(next.getDate() + 1);
         task.date = next.toISOString().split("T")[0];
@@ -279,6 +269,46 @@ function checkReminders() {
 }
 
 setInterval(checkReminders, 1000);
+
+/* PARTICLE ANIMATION */
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let particles = [];
+
+for (let i = 0; i < 80; i++) {
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 3,
+    dx: Math.random() - 0.5,
+    dy: Math.random() - 0.5
+  });
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  particles.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = "white";
+    ctx.fill();
+
+    p.x += p.dx;
+    p.y += p.dy;
+
+    if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+    if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+  });
+
+  requestAnimationFrame(animateParticles);
+}
+
+animateParticles();
 
 render();
 </script>
