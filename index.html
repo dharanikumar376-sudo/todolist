@@ -17,14 +17,12 @@
       animation: gradientBG 10s ease infinite;
     }
 
-    /* Animated Gradient */
     @keyframes gradientBG {
       0% {background-position: 0% 50%;}
       50% {background-position: 100% 50%;}
       100% {background-position: 0% 50%;}
     }
 
-    /* Floating bubbles */
     .bubble {
       position: absolute;
       bottom: -100px;
@@ -42,17 +40,9 @@
     .bubble:nth-child(5) { left: 80%; animation-duration: 9s; }
 
     @keyframes rise {
-      0% {
-        transform: translateY(0);
-        opacity: 0;
-      }
-      50% {
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-120vh);
-        opacity: 0;
-      }
+      0% { transform: translateY(0); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(-120vh); opacity: 0; }
     }
 
     .card {
@@ -79,7 +69,6 @@
 
 <body>
 
-<!-- Bubbles -->
 <div class="bubble"></div>
 <div class="bubble"></div>
 <div class="bubble"></div>
@@ -90,13 +79,16 @@
   <div class="card p-4">
     <h1 class="text-center">📝 Smart To-Do List</h1>
 
-    <!-- Form -->
+    <!-- FORM -->
     <form id="taskForm" class="row g-2 my-3">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <input type="text" id="taskInput" class="form-control" placeholder="Task" required>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <input type="date" id="dateInput" class="form-control" required>
+      </div>
+      <div class="col-md-2">
+        <input type="time" id="timeInput" class="form-control" required>
       </div>
       <div class="col-md-3">
         <select id="priorityInput" class="form-control">
@@ -110,10 +102,8 @@
       </div>
     </form>
 
-    <!-- Search -->
     <input type="text" id="search" class="form-control mb-3" placeholder="Search tasks...">
 
-    <!-- Task List -->
     <ul id="taskList" class="list-group"></ul>
     <p id="emptyMessage" class="text-center text-muted mt-3"></p>
   </div>
@@ -129,7 +119,13 @@
 
   const taskInput = document.getElementById("taskInput");
   const dateInput = document.getElementById("dateInput");
+  const timeInput = document.getElementById("timeInput");
   const priorityInput = document.getElementById("priorityInput");
+
+  // Ask notification permission
+  if ("Notification" in window) {
+    Notification.requestPermission();
+  }
 
   render();
 
@@ -140,8 +136,10 @@
       id: Date.now(),
       text: taskInput.value,
       date: dateInput.value,
+      time: timeInput.value,
       priority: priorityInput.value,
-      completed: false
+      completed: false,
+      notified: false
     };
 
     tasks.push(task);
@@ -166,7 +164,7 @@
         if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
           return priorityOrder[a.priority] - priorityOrder[b.priority];
         }
-        return new Date(a.date) - new Date(b.date);
+        return new Date(a.date + "T" + a.time) - new Date(b.date + "T" + b.time);
       });
 
     if (filtered.length === 0) {
@@ -184,7 +182,7 @@
       li.innerHTML = `
         <div class="task-text">
           <strong>${task.text}</strong><br>
-          <small>${task.date} | ${task.priority}</small>
+          <small>${task.date} ${task.time} | ${task.priority}</small>
         </div>
         <div>
           <button class="btn btn-success btn-sm">✔</button>
@@ -236,6 +234,30 @@
       list.appendChild(li);
     });
   }
+
+  // Reminder check
+  function checkReminders() {
+    const now = new Date();
+
+    tasks.forEach(task => {
+      if (!task.completed && !task.notified) {
+        const taskTime = new Date(task.date + "T" + task.time);
+
+        if (now >= taskTime) {
+          if (Notification.permission === "granted") {
+            new Notification("⏰ Reminder", {
+              body: task.text + " (" + task.time + ")"
+            });
+          }
+
+          task.notified = true;
+          save();
+        }
+      }
+    });
+  }
+
+  setInterval(checkReminders, 1000);
 </script>
 
 </body>
