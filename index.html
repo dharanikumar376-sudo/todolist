@@ -11,101 +11,37 @@
 body {
   margin: 0;
   font-family: Arial;
-  overflow: hidden;
+  overflow-x: hidden;
   background: black;
 }
 
-/* SKY */
-.sky {
+/* 🎬 PINTEREST STYLE VIDEO BACKGROUND */
+#bgVideo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -3;
+  filter: brightness(0.5) blur(2px);
+}
+
+/* ✨ GLASS EFFECT */
+body::after {
+  content: "";
   position: fixed;
   width: 100%;
   height: 100%;
-  background: linear-gradient(black, #001);
-  z-index: -5;
-}
-
-/* ROAD */
-.road {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  height: 120px;
-  background: #222;
-  z-index: -4;
-}
-
-.road::before {
-  content: "";
-  position: absolute;
-  width: 200%;
-  height: 5px;
-  background: white;
-  top: 50%;
-  left: 0;
-  animation: roadMove 2s linear infinite;
-}
-
-@keyframes roadMove {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-/* VEHICLES */
-.vehicle {
-  position: fixed;
-  font-size: 40px;
-}
-
-/* CAR */
-.car {
-  bottom: 60px;
-  animation: moveCar 6s linear infinite;
-}
-
-@keyframes moveCar {
-  from { left: -100px; }
-  to { left: 110%; }
-}
-
-/* BIKE */
-.bike {
-  bottom: 20px;
-  animation: moveBike 4s linear infinite;
-}
-
-@keyframes moveBike {
-  from { left: -100px; }
-  to { left: 110%; }
-}
-
-/* BUS */
-.bus {
-  bottom: 80px;
-  animation: moveBus 8s linear infinite;
-}
-
-@keyframes moveBus {
-  from { left: -150px; }
-  to { left: 110%; }
-}
-
-/* FLIGHT */
-.flight {
-  top: 50px;
-  font-size: 30px;
-  animation: fly 10s linear infinite;
-}
-
-@keyframes fly {
-  from { left: -100px; }
-  to { left: 110%; }
+  backdrop-filter: blur(6px);
+  z-index: -1;
 }
 
 /* UI */
 .card {
   border-radius: 20px;
   background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(15px);
   color: white;
 }
 
@@ -113,6 +49,7 @@ body {
   text-align: center;
   color: white;
   margin: 10px;
+  font-size: 20px;
 }
 
 .completed {
@@ -132,19 +69,23 @@ body {
   align-items: center;
   flex-direction: column;
   z-index: 9999;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { background: black; }
+  50% { background: red; }
+  100% { background: black; }
 }
 </style>
 </head>
 
 <body>
 
-<div class="sky"></div>
-<div class="road"></div>
-
-<div class="vehicle car">🚗</div>
-<div class="vehicle bike">🏍️</div>
-<div class="vehicle bus">🚌</div>
-<div class="vehicle flight">✈️</div>
+<!-- 🎥 SMOOTH LOOP BACKGROUND -->
+<video autoplay muted loop playsinline id="bgVideo">
+  <source src="https://cdn.coverr.co/videos/coverr-night-traffic-in-the-city-1566/1080p.mp4" type="video/mp4">
+</video>
 
 <div id="clock"></div>
 
@@ -163,6 +104,8 @@ body {
         <input type="time" id="timeInput" class="form-control" required>
       </div>
 
+      <input type="hidden" value="daily">
+
       <div class="col-md-12 mt-2">
         <button class="btn btn-primary w-100">Add Task</button>
       </div>
@@ -172,6 +115,7 @@ body {
   </div>
 </div>
 
+<!-- ALARM -->
 <div id="alarmScreen">
   <h1 id="alarmText">⏰ Alarm!</h1>
   <button class="btn btn-danger mt-3" onclick="stopAlarm()">STOP</button>
@@ -226,12 +170,38 @@ function render() {
     const li = document.createElement("li");
     li.className = "list-group-item bg-transparent text-white";
 
+    if (task.completed) li.classList.add("completed");
+
     li.innerHTML = `
-      ${task.text} - ${task.time}
-      <button onclick="deleteTask(${task.id})" class="btn btn-danger btn-sm">Delete</button>
+      <strong>${task.text}</strong><br>
+      <small>${task.date} ${task.time} (Daily)</small><br>
+
+      <button class="btn btn-success btn-sm mt-2" onclick="completeTask(${task.id})">Stop</button>
+      <button class="btn btn-warning btn-sm mt-2" onclick="editTask(${task.id})">Edit</button>
+      <button class="btn btn-danger btn-sm mt-2" onclick="deleteTask(${task.id})">Delete</button>
     `;
+
     list.appendChild(li);
   });
+}
+
+function completeTask(id) {
+  tasks = tasks.map(t => {
+    if (t.id === id) t.completed = true;
+    return t;
+  });
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  render();
+}
+
+function editTask(id) {
+  const task = tasks.find(t => t.id === id);
+
+  taskInput.value = task.text;
+  dateInput.value = task.date;
+  timeInput.value = task.time;
+
+  deleteTask(id);
 }
 
 function deleteTask(id) {
@@ -248,6 +218,10 @@ function triggerAlarm(task) {
   alarmSound.src = "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
   alarmSound.loop = true;
   alarmSound.play();
+
+  if (Notification.permission === "granted") {
+    new Notification("⏰ Alarm!", { body: task.text });
+  }
 }
 
 function stopAlarm() {
@@ -265,6 +239,12 @@ setInterval(() => {
     if (!task.notified && now >= taskTime) {
       triggerAlarm(task);
       task.notified = true;
+
+      const next = new Date(taskTime);
+      next.setDate(next.getDate() + 1);
+      task.date = next.toISOString().split("T")[0];
+      task.notified = false;
+
       localStorage.setItem("tasks", JSON.stringify(tasks));
     }
   });
