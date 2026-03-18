@@ -14,7 +14,7 @@ body {
   overflow-x: hidden;
 }
 
-/* 🎬 Background Video */
+/* 🎬 Background Video (FIXED) */
 #bgVideo {
   position: fixed;
   top: 0;
@@ -26,15 +26,30 @@ body {
   filter: brightness(0.6) blur(2px);
 }
 
-/* 🌌 Dark Overlay */
+/* 🌌 Overlay */
 #overlay {
   position: fixed;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   background: rgba(0,0,0,0.4);
   z-index: -1;
+}
+
+/* 🔥 Backup Animation */
+body::before {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, red, blue, purple, orange);
+  animation: moveBG 10s linear infinite;
+  z-index: -3;
+  opacity: 0.3;
+}
+
+@keyframes moveBG {
+  0% { transform: translate(-25%, -25%) rotate(0deg); }
+  100% { transform: translate(-25%, -25%) rotate(360deg); }
 }
 
 /* Clock */
@@ -78,10 +93,11 @@ body {
 
 <body>
 
-<!-- 🎬 Video -->
-<video autoplay muted loop id="bgVideo"></video>
+<!-- 🎬 FIXED VIDEO -->
+<video autoplay muted loop playsinline id="bgVideo">
+  <source src="https://cdn.coverr.co/videos/coverr-racing-car-on-track-1570/1080p.mp4" type="video/mp4">
+</video>
 
-<!-- 🌌 Overlay -->
 <div id="overlay"></div>
 
 <div id="clock"></div>
@@ -129,27 +145,6 @@ body {
 <script>
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-/* 🎬 Multiple Car Videos */
-const videos = [
-  "https://cdn.coverr.co/videos/coverr-racing-car-on-track-1570/1080p.mp4",
-  "https://cdn.coverr.co/videos/coverr-car-driving-through-city-at-night-1606/1080p.mp4",
-  "https://cdn.coverr.co/videos/coverr-driving-on-a-highway-while-sunset-1589/1080p.mp4"
-];
-
-let videoIndex = 0;
-const bgVideo = document.getElementById("bgVideo");
-
-function changeVideo() {
-  bgVideo.src = videos[videoIndex];
-  bgVideo.play();
-  videoIndex = (videoIndex + 1) % videos.length;
-}
-
-/* Change video every 10 sec */
-setInterval(changeVideo, 10000);
-changeVideo();
-
-/* Elements */
 const form = document.getElementById("taskForm");
 const list = document.getElementById("taskList");
 
