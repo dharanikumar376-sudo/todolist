@@ -56,6 +56,7 @@ body::before {
   text-align: center;
   color: white;
   margin: 10px;
+  font-size: 20px;
 }
 
 .completed {
@@ -63,18 +64,25 @@ body::before {
   opacity: 0.6;
 }
 
-/* Alarm */
+/* Alarm Screen Animation */
 #alarmScreen {
   position: fixed;
   width: 100%;
   height: 100%;
-  background: black;
+  background: radial-gradient(circle, red, black);
   color: white;
   display: none;
   justify-content: center;
   align-items: center;
   flex-direction: column;
   z-index: 9999;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { background: black; }
+  50% { background: red; }
+  100% { background: black; }
 }
 </style>
 </head>
@@ -169,8 +177,7 @@ form.addEventListener("submit", e => {
     repeat: repeatInput.value,
     sound: soundURL,
     completed: false,
-    notified: false,
-    snoozeUntil: null
+    notified: false
   };
 
   tasks.push(task);
@@ -244,22 +251,18 @@ function triggerAlarm(task) {
     "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
 
   alarmSound.loop = true;
+  alarmSound.volume = 1.0; // 🔊 FULL VOLUME
   alarmSound.play().catch(()=>{});
 
-  // ❌ NO VIBRATION (removed)
-  
   if (Notification.permission === "granted") {
     new Notification("⏰ Alarm!", { body: task.text });
   }
-
-  // 🔥 Set next alarm after 10 mins
-  task.snoozeUntil = new Date(Date.now() + 10 * 60000);
-  save();
 }
 
 function stopAlarm() {
   alarmScreen.style.display = "none";
   alarmSound.pause();
+  alarmSound.currentTime = 0;
 }
 
 /* Reminder */
@@ -271,16 +274,10 @@ function checkReminders() {
 
       const taskTime = new Date(task.date + "T" + task.time);
 
-      // ⏰ Exact time OR snooze time
-      if (
-        (!task.notified && now >= taskTime) ||
-        (task.snoozeUntil && now >= new Date(task.snoozeUntil))
-      ) {
+      if (!task.notified && now >= taskTime) {
 
         triggerAlarm(task);
-
         task.notified = true;
-        task.snoozeUntil = null;
 
         if (task.repeat === "daily") {
           const next = new Date(taskTime);
