@@ -1,57 +1,146 @@
 <script>
-// Ask permission again (strong request)
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+const form = document.getElementById("taskForm");
+const list = document.getElementById("taskList");
+
+const taskInput = document.getElementById("taskInput");
+const dateInput = document.getElementById("dateInput");
+const timeInput = document.getElementById("timeInput");
+const repeatInput = document.getElementById("repeatInput");
+
+const alarmScreen = document.getElementById("alarmScreen");
+const alarmText = document.getElementById("alarmText");
+
+/* Clock */
+setInterval(() => {
+  document.getElementById("clock").innerText =
+    new Date().toLocaleString();
+}, 1000);
+
+/* Notification */
 if ("Notification" in window) {
-  Notification.requestPermission().then(permission => {
-    if (permission !== "granted") {
-      alert("Enable notifications for full alarm experience!");
-    }
-  });
+  Notification.requestPermission();
 }
 
-/* Show Notification */
-function showPersistentNotification(task) {
+/* Add Task */
+form.addEventListener("submit", e => {
+  e.preventDefault();
 
-  function notify() {
-    if (Notification.permission === "granted") {
-      new Notification("⏰ Alarm Reminder", {
-        body: task.text,
-        requireInteraction: true, // stays until user clicks
-        icon: "https://cdn-icons-png.flaticon.com/512/1827/1827349.png"
-      });
-    }
-  }
+  const task = {
+    id: Date.now(),
+    text: taskInput.value,
+    date: dateInput.value,
+    time: timeInput.value,
+    repeat: repeatInput.value,
+    completed: false,
+    notified: false
+  };
 
-  notify();
+  tasks.push(task);
+  save();
+  render();
+  form.reset();
+});
 
-  // Repeat every 10 sec until stopped
-  task.notifyInterval = setInterval(() => {
-    notify();
-  }, 10000);
+function save() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-/* Stop Alarm + Notification */
-function stopAlarm() {
-  alarmScreen.style.display = "none";
-  alarmSound.pause();
-  alarmSound.currentTime = 0;
+/* Render */
+function render() {
+  list.innerHTML = "";
 
   tasks.forEach(task => {
-    if (task.notifyInterval) {
-      clearInterval(task.notifyInterval);
-    }
+    const li = document.createElement("li");
+    li.className = "list-group-item bg-transparent text-white";
+
+    if (task.completed) li.classList.add("completed");
+
+    li.innerHTML = `
+      <strong>${task.text}</strong><br>
+      <small>${task.date} ${task.time} (${task.repeat})</small><br>
+
+      <button class="btn btn-success btn-sm mt-2" onclick="completeTask(${task.id})">Stop</button>
+      <button class="btn btn-warning btn-sm mt-2" onclick="editTask(${task.id})">Edit</button>
+      <button class="btn btn-danger btn-sm mt-2" onclick="deleteTask(${task.id})">Delete</button>
+    `;
+
+    list.appendChild(li);
   });
 }
 
-/* Trigger Alarm */
+/* Stop */
+function completeTask(id) {
+  tasks = tasks.map(t => {
+    if (t.id === id) t.completed = true;
+    return t;
+  });
+  save();
+  render();
+}
+
+/* Edit */
+function editTask(id) {
+  const task = tasks.find(t => t.id === id);
+
+  taskInput.value = task.text;
+  dateInput.value = task.date;
+  timeInput.value = task.time;
+  repeatInput.value = task.repeat;
+
+  deleteTask(id);
+}
+
+/* Delete */
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  save();
+  render();
+}
+
+/* Alarm (NO SOUND 🔇) */
 function triggerAlarm(task) {
   alarmText.innerText = "⏰ " + task.text;
   alarmScreen.style.display = "flex";
 
-  alarmSound.src = "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
-  alarmSound.loop = true;
-  alarmSound.volume = 1.0;
-  alarmSound.play().catch(()=>{});
-
-  showPersistentNotification(task);
+  if (Notification.permission === "granted") {
+    new Notification("⏰ Reminder", { body: task.text });
+  }
 }
+
+function stopAlarm() {
+  alarmScreen.style.display = "none";
+}
+
+/* Reminder */
+function checkReminders() {
+  const now = new Date();
+
+  tasks.forEach(task => {
+    if (!task.completed) {
+
+      const taskTime = new Date(task.date + "T" + task.time);
+
+      if (!task.notified && now >= taskTime) {
+
+        triggerAlarm(task);
+        task.notified = true;
+
+        if (task.repeat === "daily") {
+          const next = new Date(taskTime);
+          next.setDate(next.getDate() + 1);
+          task.date = next.toISOString().split("T")[0];
+          task.notified = false;
+        }
+
+        save();
+      }
+    }
+  });
+}
+
+setInterval(checkReminders, 1000);
+
+render();
 </script>
