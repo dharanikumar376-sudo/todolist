@@ -11,24 +11,98 @@
 body {
   margin: 0;
   font-family: Arial;
+  overflow: hidden;
   background: black;
-  color: white;
+}
+
+/* VIDEO */
+#bgVideo {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -5;
+  filter: brightness(0.25);
+}
+
+/* AURORA */
+.aurora {
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  z-index: -4;
+  background: radial-gradient(circle at 30% 50%, #ff00cc, transparent),
+              radial-gradient(circle at 70% 50%, #00cfff, transparent),
+              radial-gradient(circle at 50% 80%, #7928ca, transparent);
+  animation: auroraMove 20s infinite linear;
+  opacity: 0.4;
+}
+
+@keyframes auroraMove {
+  0% { transform: translate(-10%, -10%) rotate(0deg); }
+  50% { transform: translate(-20%, -30%) rotate(180deg); }
+  100% { transform: translate(-10%, -10%) rotate(360deg); }
+}
+
+/* PARTICLES */
+#particlesCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -3;
+}
+
+/* MOUSE GLOW */
+#mouseGlow {
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255,255,255,0.2), transparent 70%);
+  transform: translate(-50%, -50%);
+  z-index: -2;
+}
+
+/* GLASS */
+body::after {
+  content: "";
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(8px);
+  z-index: -1;
 }
 
 .card {
   border-radius: 20px;
   background: rgba(255,255,255,0.08);
   backdrop-filter: blur(20px);
+  color: white;
 }
 
 #clock {
   text-align: center;
+  color: white;
   margin: 10px;
+}
+
+.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
 }
 </style>
 </head>
 
 <body>
+
+<video autoplay muted loop id="bgVideo">
+  <source src="https://cdn.coverr.co/videos/coverr-night-traffic-in-the-city-1566/1080p.mp4">
+</video>
+
+<div class="aurora"></div>
+<canvas id="particlesCanvas"></canvas>
+<div id="mouseGlow"></div>
 
 <div id="clock"></div>
 
@@ -36,30 +110,28 @@ body {
   <div class="card p-4">
     <h2 class="text-center">📱 Smart Alarm To-Do</h2>
 
-    <!-- TEST BUTTON -->
-    <button onclick="notifyNow()" class="btn btn-success mb-3">
-      🔔 Test Notification
-    </button>
-
     <form id="taskForm" class="row g-2 my-3">
-      <input type="text" id="taskInput" class="form-control" placeholder="Task" required>
-      <input type="date" id="dateInput" class="form-control" required>
-      <input type="time" id="timeInput" class="form-control" required>
-      <button class="btn btn-primary mt-2">Add Task</button>
+      <div class="col-md-4">
+        <input type="text" id="taskInput" class="form-control" placeholder="Task" required>
+      </div>
+      <div class="col-md-4">
+        <input type="date" id="dateInput" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <input type="time" id="timeInput" class="form-control" required>
+      </div>
+
+      <div class="col-md-12 mt-2">
+        <button class="btn btn-primary w-100">Add Task</button>
+      </div>
     </form>
 
-    <ul id="taskList"></ul>
+    <ul id="taskList" class="list-group"></ul>
   </div>
 </div>
 
 <script>
-/* ⏰ CLOCK */
-setInterval(() => {
-  document.getElementById("clock").innerText =
-    new Date().toLocaleString();
-}, 1000);
-
-/* 🔔 PERMISSION */
+/* 🔔 REQUEST PERMISSION */
 if ("Notification" in window) {
   Notification.requestPermission();
 }
@@ -67,22 +139,67 @@ if ("Notification" in window) {
 /* 🔊 SOUND */
 const audio = new Audio("https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3");
 
-/* 🔔 NOTIFY */
-function notifyNow(text = "Test Notification") {
-  audio.play();
+/* PARTICLES */
+const canvas = document.getElementById("particlesCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-  if (Notification.permission === "granted") {
-    new Notification("⏰ Alarm", { body: text });
-  } else {
-    alert(text);
-  }
+let particles = [];
+for (let i = 0; i < 120; i++) {
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 2,
+    speed: Math.random() * 0.5,
+    depth: Math.random() * 2
+  });
 }
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  particles.forEach(p => {
+    p.y -= p.speed * p.depth;
+    if (p.y < 0) {
+      p.y = canvas.height;
+      p.x = Math.random() * canvas.width;
+    }
+
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.depth, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+/* MOUSE GLOW */
+const glow = document.getElementById("mouseGlow");
+document.addEventListener("mousemove", e => {
+  glow.style.left = e.clientX + "px";
+  glow.style.top = e.clientY + "px";
+});
 
 /* TASK SYSTEM */
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
 const form = document.getElementById("taskForm");
 const list = document.getElementById("taskList");
 
+const taskInput = document.getElementById("taskInput");
+const dateInput = document.getElementById("dateInput");
+const timeInput = document.getElementById("timeInput");
+
+/* CLOCK */
+setInterval(() => {
+  document.getElementById("clock").innerText =
+    new Date().toLocaleString();
+}, 1000);
+
+/* ADD TASK */
 form.addEventListener("submit", e => {
   e.preventDefault();
 
@@ -91,6 +208,7 @@ form.addEventListener("submit", e => {
     text: taskInput.value,
     date: dateInput.value,
     time: timeInput.value,
+    completed: false,
     notified: false
   };
 
@@ -100,17 +218,46 @@ form.addEventListener("submit", e => {
   form.reset();
 });
 
+/* RENDER */
 function render() {
   list.innerHTML = "";
 
-  tasks.forEach(t => {
+  tasks.forEach(task => {
     const li = document.createElement("li");
+    li.className = "list-group-item bg-transparent text-white";
+
+    if (task.completed) li.classList.add("completed");
+
     li.innerHTML = `
-      ${t.text} - ${t.date} ${t.time}
-      <button onclick="deleteTask(${t.id})">❌</button>
+      <strong>${task.text}</strong><br>
+      <small>${task.date} ${task.time}</small><br>
+
+      <button class="btn btn-success btn-sm mt-2" onclick="completeTask(${task.id})">Done</button>
+      <button class="btn btn-warning btn-sm mt-2" onclick="editTask(${task.id})">Edit</button>
+      <button class="btn btn-danger btn-sm mt-2" onclick="deleteTask(${task.id})">Delete</button>
     `;
+
     list.appendChild(li);
   });
+}
+
+function completeTask(id) {
+  tasks = tasks.map(t => {
+    if (t.id === id) t.completed = true;
+    return t;
+  });
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  render();
+}
+
+function editTask(id) {
+  const task = tasks.find(t => t.id === id);
+
+  taskInput.value = task.text;
+  dateInput.value = task.date;
+  timeInput.value = task.time;
+
+  deleteTask(id);
 }
 
 function deleteTask(id) {
@@ -119,16 +266,27 @@ function deleteTask(id) {
   render();
 }
 
-/* ⏰ CHECK TIME (WORKS ONLY IF PAGE OPEN) */
+/* 🔔 ALARM (NO RED SCREEN) */
+function triggerAlarm(task) {
+  audio.play();
+
+  if (Notification.permission === "granted") {
+    new Notification("⏰ Alarm!", { body: task.text });
+  } else {
+    alert("⏰ " + task.text);
+  }
+}
+
+/* CHECK TIME */
 setInterval(() => {
   const now = new Date();
 
-  tasks.forEach(t => {
-    const taskTime = new Date(t.date + "T" + t.time);
+  tasks.forEach(task => {
+    const taskTime = new Date(task.date + "T" + task.time);
 
-    if (!t.notified && now >= taskTime) {
-      notifyNow(t.text);
-      t.notified = true;
+    if (!task.notified && now >= taskTime) {
+      triggerAlarm(task);
+      task.notified = true;
     }
   });
 
