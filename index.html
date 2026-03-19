@@ -91,16 +91,6 @@ body::after {
   text-decoration: line-through;
   opacity: 0.6;
 }
-
-/* FLASH EFFECT */
-.flash {
-  animation: flashBg 0.5s alternate infinite;
-}
-
-@keyframes flashBg {
-  from { background: black; }
-  to { background: red; }
-}
 </style>
 </head>
 
@@ -145,9 +135,6 @@ body::after {
 if ("Notification" in window) {
   Notification.requestPermission();
 }
-
-/* 🔊 SOUND */
-const audio = new Audio("https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3");
 
 /* PARTICLES */
 const canvas = document.getElementById("particlesCanvas");
@@ -276,34 +263,11 @@ function deleteTask(id) {
   render();
 }
 
-/* 🔔 ALARM IMPROVED */
+/* 🔔 ONLY NOTIFICATION */
 function triggerAlarm(task) {
-
-  // 🔊 SOUND LOOP
-  audio.loop = true;
-  audio.play();
-
-  // 📳 VIBRATION (mobile)
-  if (navigator.vibrate) {
-    navigator.vibrate([500, 300, 500, 300, 500]);
-  }
-
-  // 🔴 FLASH EFFECT
-  document.body.classList.add("flash");
-
-  // 🔔 NOTIFICATION / ALERT
   if (Notification.permission === "granted") {
     new Notification("⏰ Alarm!", { body: task.text });
-  } else {
-    alert("⏰ " + task.text);
   }
-
-  // ⛔ STOP AFTER 10 SEC
-  setTimeout(() => {
-    audio.pause();
-    audio.currentTime = 0;
-    document.body.classList.remove("flash");
-  }, 10000);
 }
 
 /* CHECK TIME */
