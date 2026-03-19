@@ -15,7 +15,7 @@ body {
   background: black;
 }
 
-/* 🎥 VIDEO */
+/* VIDEO */
 #bgVideo {
   position: fixed;
   width: 100%;
@@ -25,7 +25,7 @@ body {
   filter: brightness(0.25);
 }
 
-/* 🌌 AURORA */
+/* AURORA */
 .aurora {
   position: fixed;
   width: 200%;
@@ -44,7 +44,7 @@ body {
   100% { transform: translate(-10%, -10%) rotate(360deg); }
 }
 
-/* ✨ PARTICLES */
+/* PARTICLES */
 #particlesCanvas {
   position: fixed;
   top: 0;
@@ -52,7 +52,7 @@ body {
   z-index: -3;
 }
 
-/* 💡 MOUSE GLOW */
+/* MOUSE GLOW */
 #mouseGlow {
   position: fixed;
   width: 300px;
@@ -64,7 +64,7 @@ body {
   z-index: -2;
 }
 
-/* ❄️ GLASS */
+/* GLASS */
 body::after {
   content: "";
   position: fixed;
@@ -74,7 +74,6 @@ body::after {
   z-index: -1;
 }
 
-/* UI */
 .card {
   border-radius: 20px;
   background: rgba(255,255,255,0.08);
@@ -92,44 +91,17 @@ body::after {
   text-decoration: line-through;
   opacity: 0.6;
 }
-
-/* 🚨 ALARM (VISUAL ONLY) */
-#alarmScreen {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, red, black);
-  color: white;
-  display: none;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  z-index: 9999;
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0% { background: black; }
-  50% { background: red; }
-  100% { background: black; }
-}
 </style>
 </head>
 
 <body>
 
-<!-- 🎥 VIDEO -->
 <video autoplay muted loop id="bgVideo">
   <source src="https://cdn.coverr.co/videos/coverr-night-traffic-in-the-city-1566/1080p.mp4">
 </video>
 
-<!-- 🌌 AURORA -->
 <div class="aurora"></div>
-
-<!-- ✨ PARTICLES -->
 <canvas id="particlesCanvas"></canvas>
-
-<!-- 💡 MOUSE GLOW -->
 <div id="mouseGlow"></div>
 
 <div id="clock"></div>
@@ -158,22 +130,22 @@ body::after {
   </div>
 </div>
 
-<!-- 🚨 ALARM -->
-<div id="alarmScreen">
-  <h1 id="alarmText">⏰ Alarm!</h1>
-  <button class="btn btn-danger mt-3" onclick="stopAlarm()">STOP</button>
-</div>
-
 <script>
-/* ✨ PARTICLES ENGINE */
+/* 🔔 REQUEST PERMISSION */
+if ("Notification" in window) {
+  Notification.requestPermission();
+}
+
+/* 🔊 SOUND */
+const audio = new Audio("https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3");
+
+/* PARTICLES */
 const canvas = document.getElementById("particlesCanvas");
 const ctx = canvas.getContext("2d");
-
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let particles = [];
-
 for (let i = 0; i < 120; i++) {
   particles.push({
     x: Math.random() * canvas.width,
@@ -189,7 +161,6 @@ function animateParticles() {
 
   particles.forEach(p => {
     p.y -= p.speed * p.depth;
-
     if (p.y < 0) {
       p.y = canvas.height;
       p.x = Math.random() * canvas.width;
@@ -205,7 +176,7 @@ function animateParticles() {
 }
 animateParticles();
 
-/* 💡 MOUSE GLOW */
+/* MOUSE GLOW */
 const glow = document.getElementById("mouseGlow");
 document.addEventListener("mousemove", e => {
   glow.style.left = e.clientX + "px";
@@ -221,9 +192,6 @@ const list = document.getElementById("taskList");
 const taskInput = document.getElementById("taskInput");
 const dateInput = document.getElementById("dateInput");
 const timeInput = document.getElementById("timeInput");
-
-const alarmScreen = document.getElementById("alarmScreen");
-const alarmText = document.getElementById("alarmText");
 
 /* CLOCK */
 setInterval(() => {
@@ -262,9 +230,9 @@ function render() {
 
     li.innerHTML = `
       <strong>${task.text}</strong><br>
-      <small>${task.date} ${task.time} (Daily)</small><br>
+      <small>${task.date} ${task.time}</small><br>
 
-      <button class="btn btn-success btn-sm mt-2" onclick="completeTask(${task.id})">Stop</button>
+      <button class="btn btn-success btn-sm mt-2" onclick="completeTask(${task.id})">Done</button>
       <button class="btn btn-warning btn-sm mt-2" onclick="editTask(${task.id})">Edit</button>
       <button class="btn btn-danger btn-sm mt-2" onclick="deleteTask(${task.id})">Delete</button>
     `;
@@ -298,21 +266,18 @@ function deleteTask(id) {
   render();
 }
 
-/* 🚨 SILENT ALARM */
+/* 🔔 ALARM (NO RED SCREEN) */
 function triggerAlarm(task) {
-  alarmText.innerText = "⏰ " + task.text;
-  alarmScreen.style.display = "flex";
+  audio.play();
 
   if (Notification.permission === "granted") {
     new Notification("⏰ Alarm!", { body: task.text });
+  } else {
+    alert("⏰ " + task.text);
   }
 }
 
-function stopAlarm() {
-  alarmScreen.style.display = "none";
-}
-
-/* CHECK */
+/* CHECK TIME */
 setInterval(() => {
   const now = new Date();
 
@@ -322,15 +287,10 @@ setInterval(() => {
     if (!task.notified && now >= taskTime) {
       triggerAlarm(task);
       task.notified = true;
-
-      const next = new Date(taskTime);
-      next.setDate(next.getDate() + 1);
-      task.date = next.toISOString().split("T")[0];
-      task.notified = false;
-
-      localStorage.setItem("tasks", JSON.stringify(tasks));
     }
   });
+
+  localStorage.setItem("tasks", JSON.stringify(tasks));
 }, 1000);
 
 render();
